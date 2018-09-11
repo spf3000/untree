@@ -1,2 +1,6 @@
 *.class
 *.log
+.tags
+.idea/
+project/
+target/
