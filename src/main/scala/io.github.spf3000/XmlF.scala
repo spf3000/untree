@@ -34,20 +34,23 @@ object XmlF {
         _ <- State.modify[Int](_ + openPos(l))
         s <- State.get
       } yield (Tag(l,s) :: tagSiblings(c,s))
+    case t @ TextF(l) =>
+      for {
+        _ <- State.modify[Int](_ + lastPos(t.node))
+        s <- State.get
+      } yield(IList(Text(l, s, s + lastPos(l))))
   }
 
 type IntState[A] = State[Int,A]
 
-def tag(t: Tag): IntState[XNode] =
+def tagSibling(t: XNode): IntState[XNode] =
   for {
     _ <- State.modify[Int](_ + lastPos(t.node))
     s <- State.get
   } yield (Tag(t.node,s))
 
   private def tagSiblings(siblings: IList[XNode], startPos: Int): IList[XNode]  =  {
-     siblings.traverse(t => t match {
-       case t: Tag =>  tag(t)
-     }).run(startPos)._2
+     siblings.traverse(tagSibling).run(startPos)._2
   }
 
   type Xml = Fix[XmlF]
@@ -55,7 +58,7 @@ def tag(t: Tag): IntState[XNode] =
   def elem(v: String, l: IList[Xml]): Xml = Fix(ElemF(v,l))
 
 
-  sealed abstract class XNode
+  sealed abstract class XNode {val node: String; val start: Int; val last: Int}
   case class Tag(node: String, start: Int, close: Int, last: Int) extends XNode
   object Tag {
     def apply(node: String): Tag = Tag(node, startPos(node), closePos(node), lastPos(node))
