@@ -29,11 +29,15 @@ object XmlF {
   //top down transformation
   // XmlF[XNode] => IList[State[Int,XNode]]]
   val transformAlg: CoalgebraicGTransform[IList, XNode, XmlF, State[Int,?]] = {
-    case x @ ElemF(l,c) =>
-      for {
+    case x @ ElemF(l,c) => {
+       for {
         _ <- State.modify[Int](_ + openPos(l))
-        s <- State.get
-      } yield (Tag(l,s) :: tagSiblings(c,s))
+        s <- State.get[Int]
+        list = Tag(l,s) :: tagSiblings(c,s)
+        _ <- State.modify[Int](_ + lastPos(l) - closePos(l))
+      } yield list
+
+    }
     case t @ TextF(l) =>
       for {
         _ <- State.modify[Int](_ + lastPos(t.node))
