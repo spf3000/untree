@@ -24,9 +24,10 @@ object XmlF {
     * accumulating effects in the monad `M`.
     * @group algebras
     */
-  //  type CoalgebraicGTransform[N[_], NodeX, F[_], G[_]]        = F[T] => G[N[T]]
+  // type CoalgebraicGTransform[N[_], NodeX, F[_], G[_]]        = F[T] => G[N[T]]
   //top down transformation
   // XmlF[NodeX] => IList[State[Int,NodeX]]]
+
   val transformAlg: CoalgebraicGTransform[IList, NodeX, XmlF, State[Int, ?]] = {
     case x @ ElemF(node, childs) => {
       for {
@@ -35,7 +36,6 @@ object XmlF {
         list = TagX(node, pos) :: tagSiblings(childs, pos)
         _ <- State.modify[Int](_ + lastPos(node) - closePos(node))
       } yield list
-
     }
     case t @ TextF(l) =>
       for {
@@ -57,7 +57,8 @@ object XmlF {
   }
 
   type Xml = Fix[XmlF]
-  def text(v: String): Xml                = Fix(TextF(v))
+
+  def text(v: String): Xml    = Fix(TextF(v))
   def elem(v: String, l: IList[Xml]): Xml = Fix(ElemF(v, l))
 
 
@@ -77,8 +78,8 @@ object XmlF {
     def apply(v: String): TextX = TextX(v, startPos(v), lastPos(v))
   }
 
-private def startPos(s: String)        = 0
-private def openPos(xml: String)       = xml.indexOf('>')
+private def startPos(s: String): Int   = 0
+private def openPos(xml: String): Int  = xml.indexOf('>')
 private def closePos(xml: String): Int = xml.indices.last - xml.reverse.indexOf('<')
-private def lastPos(s: String)         = s.indices.lastOption.getOrElse(0)
+private def lastPos(s: String): Int    = s.indices.lastOption.getOrElse(0)
 }
